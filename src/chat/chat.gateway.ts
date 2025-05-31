@@ -38,8 +38,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   // Join Chat (Create User ?)
   @SubscribeMessage('join')
-  handleJoin(@ConnectedSocket() client: Socket, @MessageBody() userId: string) {
-    const user = this.userService.findById(userId);
+  async handleJoin(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() userId: string,
+  ) {
+    const user = await this.userService.findById(userId);
     if (user) {
       client.data.user = user;
       return { status: 'success', message: `Joined as ${user.username}` };

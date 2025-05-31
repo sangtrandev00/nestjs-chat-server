@@ -1,29 +1,36 @@
 import { Injectable } from '@nestjs/common';
-
-export interface User {
-  id: string;
-  username: string;
-}
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { User } from './entity/user.entity';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class UserService {
-  private users: User[] = [];
+  constructor(@InjectRepository(User) private userRepo: Repository<User>) {}
 
-  create(username: string): User {
-    const user: User = {
-      id: Date.now().toString(),
-      username,
-    };
-    this.users.push(user);
-    return user;
+  async create(username: string, password: string): Promise<User> {
+    const hashed = await bcrypt.hash(password, 10);
+    const user = this.userRepo.create({ username, password: hashed });
+    return this.userRepo.save(user);
   }
 
-  findById(id: string): User | undefined {
-    return this.users.find((user) => user.id === id);
+  async findByUsername(username: string): Promise<User | undefined> {
+    return this.userRepo.findOne({ where: { username } });
   }
 
-  findByUsername(username: string): User | undefined {
-    return this.users.find((user) => user.username === username);
+  async findById(id: string): Promise<User | undefined> {
+    return this.userRepo.findOne({ where: { id } });
+  }
+
+  async validatePassword(
+    username: string,
+    password: string,
+  ): Promise<User | null> {
+    const user = await this.findByUsername(username);
+    if (user && (await bcrypt.compare(password, user.password))) {
+      return user;
+    }
+    return null;
   }
 }
 // Chat app Postgres with Nestjs and angular!
