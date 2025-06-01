@@ -18,6 +18,13 @@ export class Message {
   @Column()
   content: string;
 
+  @Column({
+    name: 'user_id',
+    type: 'uuid',
+    nullable: false,
+  })
+  userId: string;
+
   @ManyToOne(() => User, (user) => user.messages)
   user: User;
 
